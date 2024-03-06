@@ -35,7 +35,12 @@ class LlamaConfig(PretrainedConfig):
 
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the
     documentation from [`PretrainedConfig`] for more information.
-
+    这是用于存储 ['LlamaModel'] 配置的配置类。它用于实例化 LLaMA
+    根据指定的参数进行建模，定义模型架构。使用
+    默认值将产生与 LLaMA-7B 类似的配置。
+    
+    配置对象继承自 ['PretrainedConfig']，可用于控制模型输出。阅读
+    来自 ['PretrainedConfig'] 的文档以获取更多信息。
 
     Args:
         vocab_size (`int`, *optional*, defaults to 32000):
@@ -94,7 +99,7 @@ class LlamaConfig(PretrainedConfig):
             experimental feature, subject to breaking API changes in future versions.
         attention_bias (`bool`, defaults to `False`, *optional*, defaults to `False`):
             Whether to use a bias in the query, key, value and output projection layers during self-attention.
-        attention_dropout (`float`, *optional*, defaults to 0.0):
+        attention_dropout (`float`, *optional*, defaults to 0.0): 注意力概率的辍学率
             The dropout ratio for the attention probabilities.
 
     ```python
@@ -205,6 +210,8 @@ class LlamaConfig(PretrainedConfig):
 
 def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
     """
+    这相当于 torch.repeat_interleave(x, dim=1, repeats=n_rep)。隐藏状态从 (batch, num_key_value_heads, seqlen, head_dim) 转变为 (batch, num_attention_heads, seqlen, head_dim)。
+    
     This is the equivalent of torch.repeat_interleave(x, dim=1, repeats=n_rep). The hidden states go from (batch,
     num_key_value_heads, seqlen, head_dim) to (batch, num_attention_heads, seqlen, head_dim)
     """
@@ -231,6 +238,7 @@ def _make_causal_mask(
 
 def apply_rotary_pos_emb_single(x, cos, sin, position_ids):
     # The first two dimensions of cos and sin are always 1, so we can `squeeze` them.
+    # cos 和 sin 的前两个维度始终为 1，因此我们可以对它们进行 squeeze 操作。
     cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
     sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
     cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
@@ -480,7 +488,8 @@ class H2OLlamaAttention(nn.Module):
 
         past_key_value = (key_states, value_states) if use_cache else None
 
-        # repeat k/v heads if n_kv_heads < n_heads
+        # repeat k/v heads if n_kv_heads < n_heads 
+        # 如果 n_kv_heads < n_heads，则重复 k/v heads
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
@@ -550,7 +559,8 @@ class H2OLlamaForCausalLM(LlamaForCausalLM):
 
 
 
-## H2O KV Cache dropping with Position rolling
+## H2O KV Cache dropping with Position rolling 
+## H2O KV 缓存随着位置滚动而下降
 class H2OLlamaAttention_streaming(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 
